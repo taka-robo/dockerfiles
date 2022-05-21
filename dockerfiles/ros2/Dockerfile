@@ -13,7 +13,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install language
 RUN apt-get update && apt-get install -y \
-	locales \
+	locales apt-utils\
 	&& locale-gen en_US.UTF-8 \
 	&& update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \
 	&& rm -rf /var/lib/apt/lists/*
@@ -97,9 +97,8 @@ RUN groupadd --gid $USER_GID $USERNAME \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& echo "source /usr/share/bash-completion/completions/git" >> /home/$USERNAME/.bashrc \
 	&& echo "if [ -f /opt/ros/${ROS_DISTRO}/setup.bash ]; then source /opt/ros/${ROS_DISTRO}/setup.bash; fi" >> /home/$USERNAME/.bashrc \
-	&& echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /home/$USERNAME/.bashrc \
-	&& mkdir -p ~/ros2_ws/src
-
+	&& echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /home/$USERNAME/.bashrc 
+RUN mkdir -p /home/$USERNAME/ros2_ws/src
 ENV DEBIAN_FRONTEND=
 
 ###########################################
@@ -109,6 +108,7 @@ FROM dev AS full
 
 ENV DEBIAN_FRONTEND=noninteractive
 # Install the full release
+
 RUN apt-get update && apt-get install -y \
 	ros-galactic-desktop \
 	libgl1-mesa-glx libgl1-mesa-dri \
@@ -119,14 +119,14 @@ ENV DEBIAN_FRONTEND=
 ###########################################
 #  Full+Gazebo image 
 ###########################################
-FROM full AS gazebo
+# FROM full AS gazebo
 
-ENV DEBIAN_FRONTEND=noninteractive
-# Install gazebo
-RUN apt-get update && apt-get install -y \
-	ros-galactic-gazebo* \
-	&& rm -rf /var/lib/apt/lists/*
-ENV DEBIAN_FRONTEND=
+# ENV DEBIAN_FRONTEND=noninteractive
+# # Install gazebo
+# RUN apt-get update && apt-get install -y \
+# 	ros-galactic-gazebo* \
+# 	&& rm -rf /var/lib/apt/lists/*
+# ENV DEBIAN_FRONTEND=
 
 ###########################################
 #  Full+Gazebo+Nvidia image 

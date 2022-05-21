@@ -124,10 +124,10 @@ endif
 ifeq ($(shell docker ps -aq -f name="$(NAME)"), )
 ifeq ($(TGT), $(SP_TOR))
 	@echo "[INFO] you need exec 'sudo xhost - && sudo xhost + local' before this command."
-	docker run -it -v ~/.Xauthority:/root/.Xauthority --rm -e DISPLAY=host.docker.internal:0 "$(builder)/tor" /work/run.sh $(GUI)
+	docker run -it --net=host --privileged -v ~/.Xauthority:/root/.Xauthority --rm -e DISPLAY=host.docker.internal:0 "$(builder)/tor" /work/run.sh $(GUI)
 	@exit 0
 else
-	$(D) run --name $(NAME) -it $(useropt) $(rm) $(mt) $(portopt) $(dopt) $(builder)/$(TGT) $(INIT_SHELL)
+	$(D) run --name $(NAME) --net=host --privileged -e DISPLAY=$(DISPLAY) -v /tmp/.X11-unix:/tmp/.X11-unix -it $(useropt) $(rm) $(mt) $(portopt) $(dopt) $(builder)/$(TGT) $(INIT_SHELL)
 	sleep 1 ## Magic sleep. Wait for container to stabilize.
 endif
 endif
