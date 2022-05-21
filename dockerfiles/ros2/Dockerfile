@@ -98,6 +98,7 @@ RUN groupadd --gid $USER_GID $USERNAME \
 	&& echo "source /usr/share/bash-completion/completions/git" >> /home/$USERNAME/.bashrc \
 	&& echo "if [ -f /opt/ros/${ROS_DISTRO}/setup.bash ]; then source /opt/ros/${ROS_DISTRO}/setup.bash; fi" >> /home/$USERNAME/.bashrc \
 	&& echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /home/$USERNAME/.bashrc 
+USER $USERNAME
 RUN mkdir -p /home/$USERNAME/ros2_ws/src
 ENV DEBIAN_FRONTEND=
 
@@ -109,10 +110,10 @@ FROM dev AS full
 ENV DEBIAN_FRONTEND=noninteractive
 # Install the full release
 
-RUN apt-get update && apt-get install -y \
+RUN sudo apt-get update && sudo apt-get install -y \
 	ros-galactic-desktop \
 	libgl1-mesa-glx libgl1-mesa-dri \
-	&& rm -rf /var/lib/apt/lists/*
+	&& sudo rm -rf /var/lib/apt/lists/*
 RUN    echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> ~/.bashrc
 ENV DEBIAN_FRONTEND=
 
