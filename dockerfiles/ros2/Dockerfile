@@ -1,5 +1,5 @@
-# docker build -t ros2:galactic .
-# docker run --rm -it --privileged -u ros --net=host -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ros2:galactic
+# docker build -t ros2:${ROS_DISTORO} .
+# docker run --rm -it --privileged -u ros --net=host -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ros2:${ROS_DISTORO}
 ##############################################
 # Created from template ros2.dockerfile.jinja
 ##############################################
@@ -7,9 +7,19 @@
 ###########################################
 # Base image 
 ###########################################
+ARG ROS_DISTRO=foxy
+
 FROM ubuntu:20.04 AS base
 
+ARG ROS_DISTRO
 ENV DEBIAN_FRONTEND=noninteractive
+ENV AMENT_PREFIX_PATH=/opt/ros/$ROS_DISTRO
+ENV COLCON_PREFIX_PATH=/opt/ros/$ROS_DISTRO
+ENV LD_LIBRARY_PATH=/opt/ros/$ROS_DISTRO/lib
+ENV PATH=/opt/ros/$ROS_DISTRO/bin:$PATH
+ENV PYTHONPATH=/opt/ros/$ROS_DISTRO/lib/python3.8/site-packages
+ENV ROS_PYTHON_VERSION=3
+ENV ROS_VERSION=2
 
 # Install language
 RUN apt-get update && apt-get install -y \
@@ -36,18 +46,10 @@ RUN apt-get update && apt-get install -y \
 	&& curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg \
 	&& echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null \
 	&& apt-get update && apt-get install -y \
-	ros-galactic-ros-base \
+	ros-${ROS_DISTRO}-ros-base \
 	python3-argcomplete \
 	&& rm -rf /var/lib/apt/lists/*
 
-ENV ROS_DISTRO=galactic
-ENV AMENT_PREFIX_PATH=/opt/ros/galactic
-ENV COLCON_PREFIX_PATH=/opt/ros/galactic
-ENV LD_LIBRARY_PATH=/opt/ros/galactic/lib
-ENV PATH=/opt/ros/galactic/bin:$PATH
-ENV PYTHONPATH=/opt/ros/galactic/lib/python3.8/site-packages
-ENV ROS_PYTHON_VERSION=3
-ENV ROS_VERSION=2
 ENV DEBIAN_FRONTEND=
 
 ###########################################
@@ -56,6 +58,7 @@ ENV DEBIAN_FRONTEND=
 FROM base AS dev
 
 ENV DEBIAN_FRONTEND=noninteractive
+ARG ROS_DISTRO=foxy
 RUN apt-get update && apt-get install -y \
 	bash-completion \
 	build-essential \
@@ -73,10 +76,10 @@ RUN apt-get update && apt-get install -y \
 	vim \
 	wget \
 	# Install ros distro testing packages
-	ros-galactic-ament-lint \
-	ros-galactic-launch-testing \
-	ros-galactic-launch-testing-ament-cmake \
-	ros-galactic-launch-testing-ros \
+	ros-${ROS_DISTRO}-ament-lint \
+	ros-${ROS_DISTRO}-launch-testing \
+	ros-${ROS_DISTRO}-launch-testing-ament-cmake \
+	ros-${ROS_DISTRO}-launch-testing-ros \
 	python3-autopep8 \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& rosdep init || echo "rosdep already initialized"
@@ -108,11 +111,13 @@ ENV DEBIAN_FRONTEND=
 FROM dev AS full
 
 ENV DEBIAN_FRONTEND=noninteractive
+ARG ROS_DISTRO=foxy
 # Install the full release
 
 RUN sudo apt-get update && sudo apt-get install -y \
-	ros-galactic-desktop \
+	ros-${ROS_DISTRO}-desktop \
 	libgl1-mesa-glx libgl1-mesa-dri \
+	&& rosdep update \
 	&& sudo rm -rf /var/lib/apt/lists/*
 RUN    echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> ~/.bashrc
 ENV DEBIAN_FRONTEND=
@@ -123,9 +128,10 @@ ENV DEBIAN_FRONTEND=
 # FROM full AS gazebo
 
 # ENV DEBIAN_FRONTEND=noninteractive
+# ARG ROS_DISTRO=foxy
 # # Install gazebo
 # RUN apt-get update && apt-get install -y \
-# 	ros-galactic-gazebo* \
+# 	ros-${ROS_DISTORO}-gazebo* \
 # 	&& rm -rf /var/lib/apt/lists/*
 # ENV DEBIAN_FRONTEND=
 
@@ -138,6 +144,7 @@ ENV DEBIAN_FRONTEND=
 # ################
 # # Expose the nvidia driver to allow opengl 
 # # Dependencies for glvnd and X11.
+# ARG ROS_DISTRO=foxy
 # ################
 # RUN apt-get update \
 # 	&& apt-get install -y -qq --no-install-recommends \
