@@ -58,7 +58,7 @@ ENV DEBIAN_FRONTEND=
 FROM base AS dev
 
 ENV DEBIAN_FRONTEND=noninteractive
-ARG ROS_DISTRO=foxy
+ARG ROS_DISTRO
 RUN apt-get update && apt-get install -y \
 	bash-completion \
 	build-essential \
@@ -111,7 +111,7 @@ ENV DEBIAN_FRONTEND=
 FROM dev AS full
 
 ENV DEBIAN_FRONTEND=noninteractive
-ARG ROS_DISTRO=foxy
+ARG ROS_DISTRO
 # Install the full release
 
 RUN sudo apt-get update && sudo apt-get install -y \

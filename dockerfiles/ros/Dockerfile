@@ -24,7 +24,6 @@ ENV PYTHONPATH=/opt/ros/noetic/lib/python3/dist-packages
 ENV PKG_CONFIG_PATH=/opt/ros/noetic/lib/pkgconfig
 ENV ROS_ETC_DIR=/opt/ros/noetic/etc/ros
 ENV CMAKE_PREFIX_PATH=/opt/ros/noetic
-ENV DEBIAN_FRONTEND=
 
 # Install language
 RUN apt-get update && apt-get install -y \
@@ -55,7 +54,7 @@ RUN apt-get update && apt-get install -y \
 	python3-argcomplete \
 	&& rm -rf /var/lib/apt/lists/*
 
-ENV DEBIAN_FRONTEND=
+ENV DEBIAN_FRONTEND=noninteractive 
 
 ###########################################
 #  Develop image 
@@ -121,7 +120,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ARG ROS_DISTRO
 # Install the full release
 
-RUN sudo apt-get update && sudo apt-get install -y \
+RUN sudo apt-get update && sudo apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" keyboard-configuration\
 	ros-${ROS_DISTRO}-desktop \
 	libgl1-mesa-glx libgl1-mesa-dri \
 	&& rosdep update \
