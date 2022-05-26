@@ -101,8 +101,6 @@ RUN groupadd --gid $USER_GID $USERNAME \
 	&& echo "source /usr/share/bash-completion/completions/git" >> /home/$USERNAME/.bashrc \
 	&& echo "if [ -f /opt/ros/${ROS_DISTRO}/setup.bash ]; then source /opt/ros/${ROS_DISTRO}/setup.bash; fi" >> /home/$USERNAME/.bashrc \
 	&& echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /home/$USERNAME/.bashrc 
-USER $USERNAME
-RUN mkdir -p /home/$USERNAME/ros2_ws/src
 ENV DEBIAN_FRONTEND=
 
 ###########################################
@@ -120,6 +118,8 @@ RUN sudo apt-get update && sudo apt-get install -y \
 	&& rosdep update \
 	&& sudo rm -rf /var/lib/apt/lists/*
 RUN    echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> ~/.bashrc
+USER $USERNAME
+RUN mkdir -p /home/$USERNAME/ros2_ws/src
 ENV DEBIAN_FRONTEND=
 
 ###########################################

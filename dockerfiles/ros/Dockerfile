@@ -1,33 +1,17 @@
-# docker build -t ros2:${ROS_DISTORO} .
-# docker run --rm -it --privileged -u ros --net=host -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ros2:${ROS_DISTORO}
-##############################################
-# Created from template ros2.dockerfile.jinja
-##############################################
+#############################################
+# Created from template ros.dockerfile.jinja
+#############################################
 
 ###########################################
 # Base image 
 ###########################################
-ARG ROS_DISTRO=noetic
-
 FROM ubuntu:20.04 AS base
 
-ARG ROS_DISTRO
-ENV LD_LIBRARY_PATH=/opt/ros/noetic/lib
-ENV ROS_ROOT=/opt/ros/noetic/share/ros
-ENV ROS_PACKAGE_PATH=/opt/ros/noetic/share
-ENV ROS_MASTER_URI=http://localhost:11311
-ENV ROS_PYTHON_VERSION=3
-ENV ROS_VERSION=1
-ENV PATH=/opt/ros/noetic/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ENV ROSLISP_PACKAGE_DIRECTORIES=
-ENV PYTHONPATH=/opt/ros/noetic/lib/python3/dist-packages
-ENV PKG_CONFIG_PATH=/opt/ros/noetic/lib/pkgconfig
-ENV ROS_ETC_DIR=/opt/ros/noetic/etc/ros
-ENV CMAKE_PREFIX_PATH=/opt/ros/noetic
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Install language
 RUN apt-get update && apt-get install -y \
-	locales apt-utils\
+	locales \
 	&& locale-gen en_US.UTF-8 \
 	&& update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \
 	&& rm -rf /var/lib/apt/lists/*
@@ -44,49 +28,52 @@ RUN ln -fs /usr/share/zoneinfo/UTC /etc/localtime \
 # Install ROS
 RUN apt-get update && apt-get install -y \
 	curl \
+	dirmngr \
 	gnupg2 \
 	lsb-release \
 	sudo \
 	&& sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list' \
 	&& curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add - \
 	&& apt-get update && apt-get install -y \
-	ros-${ROS_DISTRO}-ros-base \
-	python3-argcomplete \
+	ros-noetic-ros-base \
 	&& rm -rf /var/lib/apt/lists/*
 
-ENV DEBIAN_FRONTEND=noninteractive 
+# Setup environment
+ENV LD_LIBRARY_PATH=/opt/ros/noetic/lib
+ENV ROS_DISTRO=noetic
+ENV ROS_ROOT=/opt/ros/noetic/share/ros
+ENV ROS_PACKAGE_PATH=/opt/ros/noetic/share
+ENV ROS_MASTER_URI=http://localhost:11311
+ENV ROS_PYTHON_VERSION=3
+ENV ROS_VERSION=1
+ENV PATH=/opt/ros/noetic/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV ROSLISP_PACKAGE_DIRECTORIES=
+ENV PYTHONPATH=/opt/ros/noetic/lib/python3/dist-packages
+ENV PKG_CONFIG_PATH=/opt/ros/noetic/lib/pkgconfig
+ENV ROS_ETC_DIR=/opt/ros/noetic/etc/ros
+ENV CMAKE_PREFIX_PATH=/opt/ros/noetic
+ENV DEBIAN_FRONTEND=
 
 ###########################################
-#  Develop image 
+# Develop image 
 ###########################################
 FROM base AS dev
 
 ENV DEBIAN_FRONTEND=noninteractive
-ARG ROS_DISTRO
+# Install dev tools
 RUN apt-get update && apt-get install -y \
-	bash-completion \
-	build-essential \
-	cmake \
-	gdb \
-	git \
-	pylint3 \
-	byobu\
-	x11-apps\
-	python3-argcomplete \
-	python3-colcon-common-extensions \
-	python3-pip \
 	python3-rosdep \
-	python3-vcstool \
 	python3-rosinstall \
 	python3-rosinstall-generator \
-	vim \
-	wget \
-	# Install ros distro testing packages
-	ros-${ROS_DISTRO}-ament-lint \
-	ros-${ROS_DISTRO}-launch-testing \
-	ros-${ROS_DISTRO}-launch-testing-ament-cmake \
-	ros-${ROS_DISTRO}-launch-testing-ros \
+	python3-wstool \
+	python3-pip \
+	python3-pep8 \
 	python3-autopep8 \
+	pylint3 \
+	build-essential \
+	bash-completion \
+	git \
+	vim \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& rosdep init || echo "rosdep already initialized"
 
@@ -105,27 +92,21 @@ RUN groupadd --gid $USER_GID $USERNAME \
 	# Cleanup
 	&& rm -rf /var/lib/apt/lists/* \
 	&& echo "source /usr/share/bash-completion/completions/git" >> /home/$USERNAME/.bashrc \
-	&& echo "if [ -f /opt/ros/${ROS_DISTRO}/setup.bash ]; then source /opt/ros/${ROS_DISTRO}/setup.bash; fi" >> /home/$USERNAME/.bashrc \
-	&& echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /home/$USERNAME/.bashrc 
-USER $USERNAME
-RUN mkdir -p /home/$USERNAME/ros_ws/src
+	&& echo "if [ -f /opt/ros/${ROS_DISTRO}/setup.bash ]; then source /opt/ros/${ROS_DISTRO}/setup.bash; fi" >> /home/$USERNAME/.bashrc
 ENV DEBIAN_FRONTEND=
 
 ###########################################
-#  Full image 
+# Full image 
 ###########################################
 FROM dev AS full
 
 ENV DEBIAN_FRONTEND=noninteractive
-ARG ROS_DISTRO
 # Install the full release
-
-RUN sudo apt-get update && sudo apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" keyboard-configuration\
-	ros-${ROS_DISTRO}-desktop \
-	libgl1-mesa-glx libgl1-mesa-dri \
-	&& rosdep update \
-	&& sudo rm -rf /var/lib/apt/lists/*
-RUN    echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> ~/.bashrc
+RUN apt-get update && apt-get install -y --fix-missing\
+	ros-noetic-desktop \
+	&& rm -rf /var/lib/apt/lists/*
+USER $USERNAME
+RUN mkdir -p /home/$USERNAME/catkin_ws/src 
 ENV DEBIAN_FRONTEND=
 
 ###########################################
@@ -134,23 +115,21 @@ ENV DEBIAN_FRONTEND=
 # FROM full AS gazebo
 
 # ENV DEBIAN_FRONTEND=noninteractive
-# ARG ROS_DISTRO=foxy
 # # Install gazebo
 # RUN apt-get update && apt-get install -y \
-# 	ros-${ROS_DISTORO}-gazebo* \
+# 	ros-noetic-gazebo* \
 # 	&& rm -rf /var/lib/apt/lists/*
 # ENV DEBIAN_FRONTEND=
 
-###########################################
-#  Full+Gazebo+Nvidia image 
-###########################################
+# ###########################################
+# #  Full+Gazebo+Nvidia image 
+# ###########################################
 
 # FROM gazebo AS gazebo-nvidia
 
 # ################
 # # Expose the nvidia driver to allow opengl 
 # # Dependencies for glvnd and X11.
-# ARG ROS_DISTRO=foxy
 # ################
 # RUN apt-get update \
 # 	&& apt-get install -y -qq --no-install-recommends \
