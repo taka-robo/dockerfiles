@@ -62,6 +62,7 @@ FROM base AS dev
 ENV DEBIAN_FRONTEND=noninteractive
 # Install dev tools
 RUN apt-get update && apt-get install -y \
+	x11-apps \
 	python3-rosdep \
 	python3-rosinstall \
 	python3-rosinstall-generator \
