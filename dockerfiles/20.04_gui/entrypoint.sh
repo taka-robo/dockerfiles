@@ -1,20 +1,24 @@
-#!/bin/bash -e
+#!/bin/bash -eux
 
-USER_ID=$(id -u)
-GROUP_ID=$(id -g)
+function exec_usershell() {
+	cd "${LOCAL_HOME}"
+	exec sudo -u ${LOCAL_WHOAMI} /bin/bash
+}
 
-# グループを作成する
-if [ x"$GROUP_ID" != x"0" ]; then
-    groupadd -g $GROUP_ID $USER_NAME
-fi
+USER_ID=${LOCAL_UID:-9001}
+GROUP_ID=${LOCAL_GID:-9001}
 
-# ユーザを作成する
-if [ x"$USER_ID" != x"0" ]; then
-    useradd -d /home/$USER_NAME -m -s /bin/bash -u $USER_ID -g $GROUP_ID $USER_NAME
-fi
+getent passwd ${LOCAL_WHOAMI} > /dev/null && exec_usershell
 
-# パーミッションを元に戻す
-sudo chmod u-s /usr/sbin/useradd
-sudo chmod u-s /usr/sbin/groupadd
+echo "Starting with UID : $USER_ID, GID: $GROUP_ID"
+useradd -u $USER_ID -o -m ${LOCAL_WHOAMI}
+groupmod -g $GROUP_ID ${LOCAL_WHOAMI}
+passwd -d ${LOCAL_WHOAMI}
+usermod -L ${LOCAL_WHOAMI}
+# gpasswd -a ${LOCAL_WHOAMI} docker
+# chown root:docker /var/run/docker.sock
+# chmod 660 /var/run/docker.sock
+# chown -R ${LOCAL_WHOAMI}:${LOCAL_WHOAMI} /etc/dotfiles
+echo "${LOCAL_WHOAMI} ALL=NOPASSWD: ALL" | sudo EDITOR='tee -a' visudo
 
-exec $@
+exec_usershell

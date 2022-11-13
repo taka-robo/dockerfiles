@@ -62,57 +62,61 @@ FROM base AS dev
 ENV DEBIAN_FRONTEND=noninteractive
 # Install dev tools
 RUN apt-get update && apt-get install -y \
-	x11-apps 
-# 	python3-rosdep \
-# 	python3-rosinstall \
-# 	python3-rosinstall-generator \
-# 	python3-wstool \
-# 	python3-pip \
-# 	python3-pep8 \
-# 	python3-autopep8 \
-# 	pylint3 \
-# 	build-essential \
-# 	bash-completion \
-# 	git \
-# 	vim \
-# 	&& rm -rf /var/lib/apt/lists/* \
+	x11-apps \
+	iputils-ping \
+	net-tools \
+	sudo \	
+	# 	python3-rosdep \
+	# 	python3-rosinstall \
+	# 	python3-rosinstall-generator \
+	# 	python3-wstool \
+	# 	python3-pip \
+	# 	python3-pep8 \
+	# 	python3-autopep8 \
+	# 	pylint3 \
+	# 	build-essential \
+	# 	bash-completion \
+	# 	git \
+	# 	vim \
+	&& rm -rf /var/lib/apt/lists/* 
 # 	&& rosdep init || echo "rosdep already initialized"
 
-ARG USERNAME=ros
-ARG USER_UID=1000
-ARG USER_GID=$USER_UID
+# ARG USERNAME=ros
+# ARG USER_UID=1000
+# ARG USER_GID=$USER_UID
 
-# Create a non-root user
-RUN groupadd --gid $USER_GID $USERNAME \
-	&& useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME \
-	# [Optional] Add sudo support for the non-root user
-	&& apt-get update \
-	&& apt-get install -y sudo \
-	&& echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME\
-	&& chmod 0440 /etc/sudoers.d/$USERNAME \
-	# Cleanup
-	&& rm -rf /var/lib/apt/lists/* \
-	&& echo "source /usr/share/bash-completion/completions/git" >> /home/$USERNAME/.bashrc \
-	&& echo "if [ -f /opt/ros/${ROS_DISTRO}/setup.bash ]; then source /opt/ros/${ROS_DISTRO}/setup.bash; fi" >> /home/$USERNAME/.bashrc
+# # Create a non-root user
+# RUN groupadd --gid $USER_GID $USERNAME \
+# 	&& useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME \
+# 	# [Optional] Add sudo support for the non-root user
+# 	&& apt-get update \
+# 	&& apt-get install -y sudo \
+# 	&& echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME\
+# 	&& chmod 0440 /etc/sudoers.d/$USERNAME \
+# 	# Cleanup
+# 	&& rm -rf /var/lib/apt/lists/* \
+# 	&& echo "source /usr/share/bash-completion/completions/git" >> /home/$USERNAME/.bashrc \
+# 	&& echo "if [ -f /opt/ros/${ROS_DISTRO}/setup.bash ]; then source /opt/ros/${ROS_DISTRO}/setup.bash; fi" >> /home/$USERNAME/.bashrc
 # RUN chmod u+s /usr/sbin/useradd \
 #   && chmod u+s /usr/sbin/groupadd
 
-# COPY entrypoint.sh /entrypoint.sh
-# ENTRYPOINT ["/entrypoint.sh"]
-# CMD ["bash"]
+# USER taka
+COPY entrypoint.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["bash"]
 
 ENV DEBIAN_FRONTEND=
 
 ###########################################
 # Full image 
 ###########################################
-FROM dev AS full
+# FROM dev AS full
 
-ENV DEBIAN_FRONTEND=noninteractive
-# Install the full release
-# RUN apt-get update && apt-get install -y --fix-missing\
-# 	ros-noetic-desktop \
-# 	&& rm -rf /var/lib/apt/lists/*
-USER $USERNAME
-# RUN mkdir -p /home/$USERNAME/catkin_ws/src 
-ENV DEBIAN_FRONTEND=
+# ENV DEBIAN_FRONTEND=noninteractive
+# # Install the full release
+# # RUN apt-get update && apt-get install -y --fix-missing\
+# # 	ros-noetic-desktop \
+# # 	&& rm -rf /var/lib/apt/lists/*
+# USER $USERNAME
+# # RUN mkdir -p /home/$USERNAME/catkin_ws/src 
+# ENV DEBIAN_FRONTEND=
