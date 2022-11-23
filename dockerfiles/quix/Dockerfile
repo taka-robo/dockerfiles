@@ -62,6 +62,23 @@ FROM base AS dev
 ENV DEBIAN_FRONTEND=noninteractive
 # Install dev tools
 RUN apt-get update && apt-get install -y \
+	ros-$ROS_DISTRO-ros-controllers\ 
+	ros-$ROS_DISTRO-joint-trajectory-controller\ 
+	ros-$ROS_DISTRO-transmission-interface\ 
+	ros-$ROS_DISTRO-trac-ik\ ros-$ROS_DISTRO-moveit\ 
+	ros-$ROS_DISTRO-joy\ 
+	ros-$ROS_DISTRO-trajectory-msgs\ 
+	ros-$ROS_DISTRO-navigation\
+	ros-$ROS_DISTRO-tf2-sensor-msgs\ 
+	ros-$ROS_DISTRO-neonavigation-msgs\ 
+	python3-pyassimp\ 
+	libzbar-dev\ 
+	libx264-dev\ 
+	gstreamer1.0-plugins-base\ 
+	gstreamer1.0-tools\ 
+	libgstreamer1.0-dev\ 
+	libgstreamer-plugins-base1.0-dev\
+	libpcap-dev\
 	x11-apps \
 	python3-rosdep \
 	python3-rosinstall \
@@ -107,10 +124,13 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --fix-missing\
 	ros-noetic-desktop \
 	ros-noetic-rviz \
+	git \
 	&& rm -rf /var/lib/apt/lists/*
 USER $USERNAME
-RUN mkdir -p /home/$USERNAME/catkin_ws/src 
 ENV DEBIAN_FRONTEND=
+COPY entrypoint.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["bash"]
 
 ###########################################
 #  Full+Gazebo image 

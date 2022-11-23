@@ -20,14 +20,12 @@ PORT=${port}
 C_NAME=${cname}
 DAEMON=${daemon}
 GUI=${gui}
-
 ## import
 SRCS := $(shell find . -type f)
 export http_proxy
 export https_proxy
 export USER
 export HOME
-
 buildopt=
 ifeq ($(ROOT), )
 	ifeq ($(shell uname), Darwin)
@@ -42,7 +40,7 @@ ifeq ($(ROOT), )
 	# useropt+= --mount type=bind,src=$(HOME)/git,dst=$(HOME)/git
 	# useropt+= --mount type=bind,src=$(HOME)/.shared_cache,dst=$(HOME)/.shared_cache
 
-	# ## ro
+	## ro
 	# useropt+= --mount type=bind,src=$(HOME)/.ssh,dst=$(HOME)/.ssh,ro
 	# useropt+= --mount type=bind,src=$(HOME)/.ssh/known_hosts,dst=$(HOME)/.ssh/known_hosts
 	# useropt+= --mount type=bind,src=$(HOME)/.gnupg/openpgp-revocs.d,dst=$(HOME)/.gnupg/openpgp-revocs.d,ro
@@ -65,12 +63,12 @@ ifneq ($(MOUNT), )
 	mt= --mount type=bind,src=$(MOUNT),dst=$(MOUNT)
 endif
 
-# ifeq ($(AUTORM), )
-# 	rm= --rm
-# endif
-# ifeq ($(DAEMON), )
-# 	dopt= -d
-# endif
+ifeq ($(AUTORM), )
+	rm= --rm
+endif
+ifneq ($(DAEMON), )
+	dopt= -d
+endif
 
 ifneq ($(http_proxy), )
 	use_http_proxy=--build-arg http_proxy=$(http_proxy)
