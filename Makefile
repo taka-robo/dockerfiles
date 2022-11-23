@@ -30,48 +30,47 @@ export HOME
 
 buildopt=
 ifeq ($(ROOT), )
-	ifeq ($(TGT), $(SP_WORKBENCH))
-		ifeq ($(shell uname), Darwin)
-			useropt=-e LOCAL_UID=$(shell id -u ${USER}) -e LOCAL_GID=$(shell id -u ${USER}) -e LOCAL_HOME=$(HOME) -e LOCAL_WHOAMI=$(shell whoami) -e LOCAL_HOSTNAME=$(shell hostname)
-			# Default group id is '20' on macOS. This group id is already exsit on Linux Container. So set a same value as uid.
-		else
-			useropt=-e LOCAL_UID=$(shell id -u ${USER}) -e LOCAL_GID=$(shell id -g ${USER}) -e LOCAL_HOME=$(HOME) -e LOCAL_WHOAMI=$(shell whoami) -e LOCAL_HOSTNAME=$(shell hostname)
-			buildopt+=--build-arg local_docker_gid=$(shell getent group docker | awk  -F: '{print $$3}')
-		endif
-		## wr
-		useropt+= --mount type=bind,src=$(HOME)/work,dst=$(HOME)/work
-		useropt+= --mount type=bind,src=$(HOME)/git,dst=$(HOME)/git
-		useropt+= --mount type=bind,src=$(HOME)/.shared_cache,dst=$(HOME)/.shared_cache
-
-		## ro
-		useropt+= --mount type=bind,src=$(HOME)/.ssh,dst=$(HOME)/.ssh,ro
-		useropt+= --mount type=bind,src=$(HOME)/.ssh/known_hosts,dst=$(HOME)/.ssh/known_hosts
-		useropt+= --mount type=bind,src=$(HOME)/.gnupg/openpgp-revocs.d,dst=$(HOME)/.gnupg/openpgp-revocs.d,ro
-		useropt+= --mount type=bind,src=$(HOME)/.gnupg/private-keys-v1.d,dst=$(HOME)/.gnupg/private-keys-v1.d,ro
-		useropt+= --mount type=bind,src=$(HOME)/.gnupg/pubring.kbx,dst=$(HOME)/.gnupg/pubring.kbx,ro
-		useropt+= --mount type=bind,src=$(HOME)/.gnupg/pubring.kbx~,dst=$(HOME)/.gnupg/pubring.kbx~,ro
-		useropt+= --mount type=bind,src=$(HOME)/.gnupg/trustdb.gpg,dst=$(HOME)/.gnupg/trustdb.gpg,ro
-		useropt+= --mount type=bind,src=$(HOME)/.gitconfig,dst=$(HOME)/.gitconfig,ro
-		useropt+= --mount type=bind,src=$(HOME)/.muttrc.add,dst=$(HOME)/.muttrc.add,ro
-		useropt+= --mount type=bind,src=$(HOME)/.muttrc.signature,dst=$(HOME)/.muttrc.signature,ro
-		useropt+= --mount type=bind,src=$(HOME)/.muttrc.passwords.gpg,dst=$(HOME)/.muttrc.passwords.gpg,ro
-		useropt+= --mount type=bind,src=$(HOME)/Downloads,dst=$(HOME)/Downloads,ro
-		useropt+= --mount type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock
-		INIT_SHELL=/usr/local/bin/exec_user.sh
+	ifeq ($(shell uname), Darwin)
+		useropt=-e LOCAL_UID=$(shell id -u ${USER}) -e LOCAL_GID=$(shell id -u ${USER}) -e LOCAL_HOME=$(HOME) -e LOCAL_WHOAMI=$(shell whoami) -e LOCAL_HOSTNAME=$(shell hostname)
+		# Default group id is '20' on macOS. This group id is already exsit on Linux Container. So set a same value as uid.
 	else
-		useropt=-u `id -u`:`id -g`
+		useropt=-e LOCAL_UID=$(shell id -u ${USER}) -e LOCAL_GID=$(shell id -g ${USER}) -e LOCAL_HOME=$(HOME) -e LOCAL_WHOAMI=$(shell whoami) -e LOCAL_HOSTNAME=$(shell hostname)
+		buildopt+=--build-arg local_docker_gid=$(shell getent group docker | awk  -F: '{print $$3}')
 	endif
+	## wr
+	# useropt+= --mount type=bind,src=$(HOME)/work,dst=$(HOME)/work
+	# useropt+= --mount type=bind,src=$(HOME)/git,dst=$(HOME)/git
+	# useropt+= --mount type=bind,src=$(HOME)/.shared_cache,dst=$(HOME)/.shared_cache
+
+	# ## ro
+	# useropt+= --mount type=bind,src=$(HOME)/.ssh,dst=$(HOME)/.ssh,ro
+	# useropt+= --mount type=bind,src=$(HOME)/.ssh/known_hosts,dst=$(HOME)/.ssh/known_hosts
+	# useropt+= --mount type=bind,src=$(HOME)/.gnupg/openpgp-revocs.d,dst=$(HOME)/.gnupg/openpgp-revocs.d,ro
+	# useropt+= --mount type=bind,src=$(HOME)/.gnupg/private-keys-v1.d,dst=$(HOME)/.gnupg/private-keys-v1.d,ro
+	# useropt+= --mount type=bind,src=$(HOME)/.gnupg/pubring.kbx,dst=$(HOME)/.gnupg/pubring.kbx,ro
+	# useropt+= --mount type=bind,src=$(HOME)/.gnupg/pubring.kbx~,dst=$(HOME)/.gnupg/pubring.kbx~,ro
+	# useropt+= --mount type=bind,src=$(HOME)/.gnupg/trustdb.gpg,dst=$(HOME)/.gnupg/trustdb.gpg,ro
+	# useropt+= --mount type=bind,src=$(HOME)/.gitconfig,dst=$(HOME)/.gitconfig,ro
+	# useropt+= --mount type=bind,src=$(HOME)/.muttrc.add,dst=$(HOME)/.muttrc.add,ro
+	# useropt+= --mount type=bind,src=$(HOME)/.muttrc.signature,dst=$(HOME)/.muttrc.signature,ro
+	# useropt+= --mount type=bind,src=$(HOME)/.muttrc.passwords.gpg,dst=$(HOME)/.muttrc.passwords.gpg,ro
+	# useropt+= --mount type=bind,src=$(HOME)/Downloads,dst=$(HOME)/Downloads,ro
+	# useropt+= --mount type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock
+	INIT_SHELL=/usr/local/bin/exec_user.sh
+else
+	useropt=-u `id -u`:`id -g`
 endif
+# $(shell echo useropt)
 ifneq ($(MOUNT), )
 	mt= --mount type=bind,src=$(MOUNT),dst=$(MOUNT)
 endif
 
-ifeq ($(AUTORM), )
-	rm= --rm
-endif
-ifeq ($(DAEMON), )
-	dopt= -d
-endif
+# ifeq ($(AUTORM), )
+# 	rm= --rm
+# endif
+# ifeq ($(DAEMON), )
+# 	dopt= -d
+# endif
 
 ifneq ($(http_proxy), )
 	use_http_proxy=--build-arg http_proxy=$(http_proxy)
@@ -128,7 +127,7 @@ ifeq ($(TGT), $(SP_TOR))
 	@exit 0
 else
 	$(D) run --name $(NAME) --net=host --privileged -e DISPLAY=$(DISPLAY) -v /tmp/.X11-unix:/tmp/.X11-unix -it $(useropt) $(rm) $(mt) $(portopt) $(dopt) $(builder)/$(TGT) $(INIT_SHELL)
-	sleep 1 ## Magic sleep. Wait for container to stabilize.
+	sleep 2 ## Magic sleep. Wait for container to stabilize.
 endif
 endif
 
