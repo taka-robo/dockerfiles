@@ -10,6 +10,7 @@ FROM ubuntu:20.04 AS base
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install language
+RUN sed -i 's@archive.ubuntu.com@ftp.jaist.ac.jp/pub/Linux@g' /etc/apt/sources.list
 RUN apt-get update && apt-get install -y \
 	locales \
 	&& locale-gen en_US.UTF-8 \
@@ -60,12 +61,62 @@ ENV DEBIAN_FRONTEND=
 FROM base AS dev
 
 ENV DEBIAN_FRONTEND=noninteractive
+RUN sed -i 's@archive.ubuntu.com@ftp.jaist.ac.jp/pub/Linux@g' /etc/apt/sources.list
 # Install dev tools
-RUN apt-get update && apt-get install -y \
+# RUN apt-get update && apt-get install -y 
+ARG USERNAME=quix
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+ARG SSH_KEY
+
+# Create a non-root user
+RUN groupadd --gid $USER_GID $USERNAME \
+	&& useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME \
+	# [Optional] Add sudo support for the non-root user
+	&& apt-get update \
+	&& apt-get install -y\
+	sudo \
+	git \
+	openssh-server\
+	&& echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME\
+	&& chmod 0440 /etc/sudoers.d/$USERNAME 
+
+# Cleanup & setup bashrc
+RUN rm -rf /var/lib/apt/lists/* \
+	&& echo "source /usr/share/bash-completion/completions/git" >> /home/$USERNAME/.bashrc \
+	&& echo "if [ -f /opt/ros/${ROS_DISTRO}/setup.bash ]; then source /opt/ros/${ROS_DISTRO}/setup.bash; fi" >> /home/$USERNAME/.bashrc
+
+USER $USERNAME
+RUN mkdir -p /home/${USERNAME}/.ssh/
+RUN echo $SSH_KEY > /home/${USERNAME}/.ssh/id_rsa  
+# RUN ssh -o "StrictHostKeyChecking=no"
+# RUN touch /home/${USERNAME}
+RUN echo -e "Host gitlab.com\n\tStrictHostKeyChecking no\n" > /home/${USERNAME}/.ssh/config
+# && sudo chmod -R 600 /home/${USERNAME}/.ssh/  
+# RUN sudo ssh-keyscan -t rsa gitlab.com >> /home/${USERNAME}/.ssh/known_hosts
+
+RUN mkdir -p /home/quix/ros/workspaces/quix/src \
+	&& cd /home/quix/ros/workspaces/quix/src 
+# RUN sudo git clone --recursive git@gitlab.com:team-quix/common/common_pkgs.git 
+#&& git clone --recursive git@gitlab.com:team-quix/quince/quince_pkgs.git \
+#&& git clone --recursive -b noetic-devel git@gitlab.com:team-quix/arm/arm_pkgs.git \
+#&& git clone --recursive git@gitlab.com:team-quix/chassis/onix_chassis_pkgs.git
+ENV DEBIAN_FRONTEND=
+
+###########################################
+# Full image 
+###########################################
+FROM dev AS full
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN sudo sed -i 's@archive.ubuntu.com@ftp.jaist.ac.jp/pub/Linux@g' /etc/apt/sources.list
+# Install the full release
+RUN sudo apt-get update && sudo apt-get install -y --fix-missing\
 	ros-$ROS_DISTRO-ros-controllers\ 
 	ros-$ROS_DISTRO-joint-trajectory-controller\ 
 	ros-$ROS_DISTRO-transmission-interface\ 
-	ros-$ROS_DISTRO-trac-ik\ ros-$ROS_DISTRO-moveit\ 
+	ros-$ROS_DISTRO-trac-ik\
+	ros-$ROS_DISTRO-moveit\ 
 	ros-$ROS_DISTRO-joy\ 
 	ros-$ROS_DISTRO-trajectory-msgs\ 
 	ros-$ROS_DISTRO-navigation\
@@ -93,44 +144,17 @@ RUN apt-get update && apt-get install -y \
 	git \
 	vim \
 	byobu \
+	openssh-server \
 	&& rm -rf /var/lib/apt/lists/* \
-	&& rosdep init || echo "rosdep already initialized"
+	&& rm /etc/apt/apt.conf.d/docker-clean \
+	&& rosdep init || echo "rosdep already initialized" 
 
-ARG USERNAME=ros
-ARG USER_UID=1000
-ARG USER_GID=$USER_UID
-
-# Create a non-root user
-RUN groupadd --gid $USER_GID $USERNAME \
-	&& useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME \
-	# [Optional] Add sudo support for the non-root user
-	&& apt-get update \
-	&& apt-get install -y sudo \
-	&& echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME\
-	&& chmod 0440 /etc/sudoers.d/$USERNAME \
-	# Cleanup
-	&& rm -rf /var/lib/apt/lists/* \
-	&& echo "source /usr/share/bash-completion/completions/git" >> /home/$USERNAME/.bashrc \
-	&& echo "if [ -f /opt/ros/${ROS_DISTRO}/setup.bash ]; then source /opt/ros/${ROS_DISTRO}/setup.bash; fi" >> /home/$USERNAME/.bashrc
 ENV DEBIAN_FRONTEND=
-
-###########################################
-# Full image 
-###########################################
-FROM dev AS full
-
-ENV DEBIAN_FRONTEND=noninteractive
-# Install the full release
-RUN apt-get update && apt-get install -y --fix-missing\
-	ros-noetic-desktop \
-	ros-noetic-rviz \
-	git \
-	&& rm -rf /var/lib/apt/lists/*
-USER $USERNAME
-ENV DEBIAN_FRONTEND=
-COPY entrypoint.sh /entrypoint.sh
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["bash"]
+#ros-noetic-desktop \
+#ros-noetic-rviz \
+# COPY entrypoint.sh /entrypoint.sh
+# ENTRYPOINT ["/entrypoint.sh"]
+# CMD ["bash"]
 
 ###########################################
 #  Full+Gazebo image 
