@@ -75,6 +75,7 @@ RUN apt-get update && apt-get install -y \
 	bash-completion \
 	git \
 	vim \
+	byobu \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& rosdep init || echo "rosdep already initialized"
 
@@ -105,6 +106,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install the full release
 RUN apt-get update && apt-get install -y --fix-missing\
 	ros-noetic-desktop \
+	ros-noetic-rviz \
 	&& rm -rf /var/lib/apt/lists/*
 USER $USERNAME
 RUN mkdir -p /home/$USERNAME/catkin_ws/src 
