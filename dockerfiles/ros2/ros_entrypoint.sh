@@ -7,6 +7,7 @@ function exec_usershell() {
 
 USER_ID=${LOCAL_UID:-9001}
 GROUP_ID=${LOCAL_GID:-9001}
+ROS_DISTRO="foxy"
 
 getent passwd ${LOCAL_WHOAMI} > /dev/null && exec_usershell
 
@@ -16,5 +17,9 @@ groupmod -g $GROUP_ID ${LOCAL_WHOAMI}
 passwd -d ${LOCAL_WHOAMI}
 usermod -L ${LOCAL_WHOAMI}
 echo "${LOCAL_WHOAMI} ALL=NOPASSWD: ALL" | sudo EDITOR='tee -a' visudo
+
+echo "source /usr/share/bash-completion/completions/git" >> ${HOME}/.bashrc 
+echo "if [ -f /opt/ros/${ROS_DISTRO}/setup.bash ]; then source /opt/ros/${ROS_DISTRO}/setup.bash; fi" >> ${HOME}/.bashrc 
+echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ${HOME}/.bashrc 
 
 exec_usershell

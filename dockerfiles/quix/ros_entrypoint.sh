@@ -17,4 +17,8 @@ passwd -d ${LOCAL_WHOAMI}
 usermod -L ${LOCAL_WHOAMI}
 echo "${LOCAL_WHOAMI} ALL=NOPASSWD: ALL" | sudo EDITOR='tee -a' visudo
 
+echo "source /usr/share/bash-completion/completions/git" >> ~/.bashrc 
+echo "if [ -f /opt/ros/${ROS_DISTRO}/setup.bash ]; then source /opt/ros/${ROS_DISTRO}/setup.bash; fi" >> ~/.bashrc 
+echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc 
+
 exec_usershell
