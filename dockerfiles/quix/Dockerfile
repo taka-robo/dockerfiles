@@ -87,16 +87,19 @@ RUN rm -rf /var/lib/apt/lists/* \
 	&& echo "if [ -f /opt/ros/${ROS_DISTRO}/setup.bash ]; then source /opt/ros/${ROS_DISTRO}/setup.bash; fi" >> /home/$USERNAME/.bashrc
 
 USER $USERNAME
-RUN mkdir -p /home/${USERNAME}/.ssh/
-RUN echo $SSH_KEY > /home/${USERNAME}/.ssh/id_rsa  
-# RUN ssh -o "StrictHostKeyChecking=no"
-# RUN touch /home/${USERNAME}
-RUN echo -e "Host gitlab.com\n\tStrictHostKeyChecking no\n" > /home/${USERNAME}/.ssh/config
-# && sudo chmod -R 600 /home/${USERNAME}/.ssh/  
-# RUN sudo ssh-keyscan -t rsa gitlab.com >> /home/${USERNAME}/.ssh/known_hosts
+# RUN mkdir -p /home/${USERNAME}/.ssh/
+# RUN echo $SSH_KEY > /home/${USERNAME}/.ssh/id_rsa  
+# # RUN ssh -o "StrictHostKeyChecking=no"
+# # RUN touch /home/${USERNAME}
+# RUN echo -e "Host gitlab.com\n\tStrictHostKeyChecking no\n" > /home/${USERNAME}/.ssh/config
+# # && sudo chmod -R 600 /home/${USERNAME}/.ssh/  
+# # RUN sudo ssh-keyscan -t rsa gitlab.com >> /home/${USERNAME}/.ssh/known_hosts
 
 RUN mkdir -p /home/quix/ros/workspaces/quix/src \
 	&& cd /home/quix/ros/workspaces/quix/src 
+WORKDIR /home/quix/ros/workspaces/quix/src
+# local path -> image path
+COPY ./clone_ws/ . 
 # RUN sudo git clone --recursive git@gitlab.com:team-quix/common/common_pkgs.git 
 #&& git clone --recursive git@gitlab.com:team-quix/quince/quince_pkgs.git \
 #&& git clone --recursive -b noetic-devel git@gitlab.com:team-quix/arm/arm_pkgs.git \
@@ -145,8 +148,8 @@ RUN sudo apt-get update && sudo apt-get install -y --fix-missing\
 	vim \
 	byobu \
 	openssh-server \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& rm /etc/apt/apt.conf.d/docker-clean \
+	&& sudo rm -rf /var/lib/apt/lists/* \
+	&& sudo rm /etc/apt/apt.conf.d/docker-clean \
 	&& rosdep init || echo "rosdep already initialized" 
 
 ENV DEBIAN_FRONTEND=
